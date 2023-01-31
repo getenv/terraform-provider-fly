@@ -11,7 +11,6 @@ import (
 	"github.com/superfly/graphql"
 )
 
-// Ensure the implementation satisfies the expected interfaces.
 var (
 	_ resource.Resource                = &secretResource{}
 	_ resource.ResourceWithConfigure   = &secretResource{}
