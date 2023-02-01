@@ -79,7 +79,7 @@ func (r *appResource) Create(ctx context.Context, req resource.CreateRequest, re
 		return
 	}
 
-	query := `
+	q := `
 		mutation($input: CreateAppInput!) {
 			createApp(input: $input) {
 				app {
@@ -105,7 +105,7 @@ func (r *appResource) Create(ctx context.Context, req resource.CreateRequest, re
 		OrganizationID: orgID,
 	}
 
-	grq := graphql.NewRequest(query)
+	grq := graphql.NewRequest(q)
 	grq.Var("input", input)
 
 	var fq fly.Query
@@ -125,19 +125,20 @@ func (r *appResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 		return
 	}
 
-	query := `
+	q := `
 		query ($appName: String!) {
 			app(name: $appName) {
+				id
 				name
 			}
 		}
 	`
 
-	grq := graphql.NewRequest(query)
+	grq := graphql.NewRequest(q)
 	grq.Var("appName", app.Name.ValueString())
 
-	var fr fly.Query
-	if err := r.client.Run(ctx, grq, &fr); err != nil {
+	var fq fly.Query
+	if err := r.client.Run(ctx, grq, &fq); err != nil {
 		resp.Diagnostics.AddError("Query failed", err.Error())
 	}
 
@@ -148,28 +149,82 @@ func (r *appResource) Update(ctx context.Context, req resource.UpdateRequest, re
 }
 
 func (r *appResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var app appResourceModel
+
+	diags := req.State.Get(ctx, &app)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	appID, err := lookupAppID(r.client, app.Name.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("App lookup failed", err.Error())
+	}
+
+	q := `
+		mutation($appId: ID!) {
+			deleteApp(appId: $appId) {
+				organization {
+					id
+				}
+			}
+		}
+	`
+
+	grq := graphql.NewRequest(q)
+	grq.Var("appId", appID)
+
+	var fq fly.Query
+	if err := r.client.Run(context.Background(), grq, &fq); err != nil {
+		resp.Diagnostics.AddError("Query failed", err.Error())
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &app)...)
 }
 
 func (r *appResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 }
 
+// lookupAppID looks up a Fly app by name and returns the internal ID
+func lookupAppID(client *graphql.Client, name string) (string, error) {
+	q := `
+		query ($appName: String!) {
+			app(name: $appName) {
+				id
+				name
+			}
+		}
+	`
+
+	grq := graphql.NewRequest(q)
+	grq.Var("appName", name)
+
+	var fq fly.Query
+	if err := client.Run(context.Background(), grq, &fq); err != nil {
+		return "", err
+	}
+
+	return fq.App.ID, nil
+}
+
 // lookupOrgID looks up a Fly organization by name and returns the internal ID
 func lookupOrgID(client *graphql.Client, name string) (string, error) {
 	q := `
-	query($slug: String!) {
-		organization(slug: $slug) {
-			id
+		query($slug: String!) {
+			organization(slug: $slug) {
+				id
+			}
 		}
-	}
-`
+	`
 
 	grq := graphql.NewRequest(q)
 	grq.Var("slug", name)
 
-	var ff fly.Query
-	if err := client.Run(context.Background(), grq, &ff); err != nil {
+	var fq fly.Query
+	if err := client.Run(context.Background(), grq, &fq); err != nil {
 		return "", err
 	}
 
-	return ff.Organization.ID, nil
+	return fq.Organization.ID, nil
 }
