@@ -146,6 +146,7 @@ func (r *appResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 }
 
 func (r *appResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	resp.Diagnostics.AddError("App update not supported", "")
 }
 
 func (r *appResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -184,6 +185,7 @@ func (r *appResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 }
 
 func (r *appResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resp.Diagnostics.AddError("State import not supported", "")
 }
 
 // lookupAppID looks up a Fly app by name and returns the internal ID

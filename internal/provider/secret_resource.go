@@ -120,30 +120,6 @@ func (r *secretResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	query := `
-		query ($appName: String!) {
-			app(name: $appName) {
-				secrets(name: $secretName) {
-					name
-				}
-			}
-		}
-	`
-
-	grq := graphql.NewRequest(query)
-	grq.Var("appName", secret.AppName.ValueString())
-	grq.Var("secretName", secret.Name.ValueString())
-
-	var fr fly.Query
-	if err := r.client.Run(ctx, grq, &fr); err != nil {
-		resp.Diagnostics.AddError("Query failed", err.Error())
-	}
-
-	// FIX: validate that secret was found
-	s := fr.App.Secrets[0]
-
-	secret.Name = types.StringValue(s.Name)
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &secret)...)
 }
 
