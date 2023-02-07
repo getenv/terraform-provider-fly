@@ -28,7 +28,6 @@ func newIpResource() resource.Resource {
 type ipResourceModel struct {
 	Address types.String `tfsdk:"address"`
 	AppName types.String `tfsdk:"app"`
-	Region  types.String `tfsdk:"region"`
 }
 
 func (r *ipResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -46,10 +45,6 @@ func (r *ipResource) Schema(_ context.Context, req resource.SchemaRequest, resp 
 			},
 			"app": schema.StringAttribute{
 				MarkdownDescription: "App name",
-				Required:            true,
-			},
-			"region": schema.StringAttribute{
-				MarkdownDescription: "IP region",
 				Required:            true,
 			},
 		},
@@ -87,14 +82,14 @@ func (r *ipResource) Create(ctx context.Context, req resource.CreateRequest, res
 	query := `
 		mutation($input: AllocateIPAddressInput!) {
 			allocateIpAddress(input: $input) {
-				app {
-					sharedIpAddress
+				ipAddress {
+					address
 				}
 			}
 		}
 	`
 
-	input := fly.AllocateIPAddressInput{AppID: ip.AppName.ValueString(), Type: "shared_v4", Region: ip.Region.ValueString()}
+	input := fly.AllocateIPAddressInput{AppID: ip.AppName.ValueString(), Type: "v6"}
 
 	grq := graphql.NewRequest(query)
 	grq.Var("input", input)
@@ -104,7 +99,7 @@ func (r *ipResource) Create(ctx context.Context, req resource.CreateRequest, res
 		resp.Diagnostics.AddError("Query failed", err.Error())
 	}
 
-	ip.Address = types.StringValue(ff.AllocateIPAddress.App.SharedIPAddress)
+	ip.Address = types.StringValue(ff.AllocateIPAddress.IPAddress.Address)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &ip)...)
 }
 
