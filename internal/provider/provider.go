@@ -55,6 +55,7 @@ func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource
 func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		newAppResource,
+		newIpResource,
 		newSecretResource,
 	}
 }
