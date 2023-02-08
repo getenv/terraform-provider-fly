@@ -109,7 +109,36 @@ func (r *secretsResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *secretsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	resp.Diagnostics.AddError("Secret reads are currently unsupported", "")
+	var secrets secretsResourceModel
+
+	diags := req.State.Get(ctx, &secrets)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	q := `
+		query ($appName: String!) {
+			app(name: $appName) {
+				secrets {
+					name
+					digest
+				}
+			}
+		}
+	`
+
+	grq := graphql.NewRequest(q)
+	grq.Var("appName", secrets.AppName.ValueString())
+
+	var fq fly.Query
+	if err := r.client.Run(context.Background(), grq, &fq); err != nil {
+		resp.Diagnostics.AddError("Query failed", err.Error())
+	}
+
+	// FIX: set secrets kv pairs
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, secrets)...)
 }
 
 func (r *secretsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
