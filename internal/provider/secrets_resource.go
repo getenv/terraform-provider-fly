@@ -90,10 +90,14 @@ func (r *secretsResource) Create(ctx context.Context, req resource.CreateRequest
 	`
 
 	input := fly.SetSecretsInput{AppID: secrets.AppName.ValueString()}
-	for k, v := range secrets.Secrets.Elements() {
+
+	var secretKvs = make(map[string]string)
+	secrets.Secrets.ElementsAs(ctx, &secretKvs, false)
+
+	for k, v := range secretKvs {
 		input.Secrets = append(input.Secrets, fly.SetSecretsInputSecret{
 			Key:   k,
-			Value: v.String(),
+			Value: v,
 		})
 	}
 
