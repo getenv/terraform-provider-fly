@@ -5,3 +5,11 @@ terraform-provider-fly_v0.0.1: plugdir
 
 plugdir:
 	mkdir -p $(PLUGDIR)
+
+clean:
+	rm -rf */.terraform*
+	rm -rf */terraform*
+
+build:
+	make clean
+	make terraform-provider-fly_v0.0.1
