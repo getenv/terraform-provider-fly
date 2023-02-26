@@ -1,7 +1,5 @@
-resource "fly_secrets" "things" {
+resource "fly_certificates" "things" {
   app = "getenv-terraform-provider-fly-test"
-
-  secrets = {
-    "THING" = "1"
-  }
+  app_id = "getenv-terraform-provider-fly-test"
+  host = "test_Host"
 }
