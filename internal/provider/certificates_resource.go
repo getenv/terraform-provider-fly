@@ -28,6 +28,7 @@ func newCertificatesResource() resource.Resource {
 
 type certificatesResourceModel struct {
 	AppName  types.String `tfsdk:"app"`
+	AppID    types.String `tfsdk:"app_id"`
 	HostName types.String `tfsdk:"host"`
 }
 
@@ -43,6 +44,13 @@ func (r *certificatesResource) Schema(_ context.Context, req resource.SchemaRequ
 			"app": schema.StringAttribute{
 				MarkdownDescription: "App name",
 				Required:            true,
+			},
+			"app_id": schema.StringAttribute{
+				MarkdownDescription: "App ID",
+				// AttributeTypes: map[string]attr.Type{
+				// 	"id": types.StringType,
+				// },
+				Required: true,
 			},
 			"host": schema.StringAttribute{
 				MarkdownDescription: "Host name",
@@ -76,14 +84,15 @@ func (r *certificatesResource) Create(ctx context.Context, req resource.CreateRe
 
 	diags := req.Plan.Get(ctx, &certificate)
 
-	data, err := json.Marshal(certificate)
+	data, err := json.Marshal(diags)
 	if err != nil {
 		resp.Diagnostics.AddError("unmarshall error", err.Error())
 	}
 
-	resp.Diagnostics.AddError("Query failed setting a cert to the app", string(data))
 	resp.Diagnostics.Append(diags...)
+
 	if resp.Diagnostics.HasError() {
+		resp.Diagnostics.AddError("Query failed setting a cert to the app", string(data))
 		return
 	}
 
@@ -99,7 +108,7 @@ func (r *certificatesResource) Create(ctx context.Context, req resource.CreateRe
 	`
 
 	appCert := fly.AppCertificate{
-		ID:       certificate.AppName.ValueString(),
+		ID:       certificate.AppID.ValueString(),
 		Hostname: certificate.HostName.ValueString(),
 	}
 
@@ -108,7 +117,8 @@ func (r *certificatesResource) Create(ctx context.Context, req resource.CreateRe
 	// input := fly.AppCertificate{}
 
 	grq := graphql.NewRequest(query)
-	grq.Var("input", appCert)
+	grq.Var("appId", appCert.ID)
+	grq.Var("hostname", appCert.Hostname)
 
 	var ff fly.Query
 	if err := r.client.Run(context.Background(), grq, &ff); err != nil {
@@ -119,6 +129,37 @@ func (r *certificatesResource) Create(ctx context.Context, req resource.CreateRe
 }
 
 func (r *certificatesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var certificates certificatesResourceModel
+
+	diags := req.State.Get(ctx, &certificates)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	q := `
+		query($appName: String!) {
+			appcertscompact:app(name: $appName) {
+				certificates {
+					nodes {
+						hostname
+					}
+				}
+			}
+		}
+	`
+
+	grq := graphql.NewRequest(q)
+	grq.Var("appName", certificates.AppName.ValueString())
+
+	var fq fly.Query
+	if err := r.client.Run(context.Background(), grq, &fq); err != nil {
+		resp.Diagnostics.AddError("Query failed fetching Read", err.Error())
+	}
+
+	// FIX: set secrets kv pairs
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, certificates)...)
 
 }
 
