@@ -57,6 +57,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		newAppResource,
 		newIpResource,
 		newSecretsResource,
+		newCertificatesResource,
 	}
 }
 

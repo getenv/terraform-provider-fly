@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -12,29 +13,29 @@ import (
 )
 
 var (
-	_ resource.Resource                = &secretsResource{}
-	_ resource.ResourceWithConfigure   = &secretsResource{}
-	_ resource.ResourceWithImportState = &secretsResource{}
+	_ resource.Resource                = &certificatesResource{}
+	_ resource.ResourceWithConfigure   = &certificatesResource{}
+	_ resource.ResourceWithImportState = &certificatesResource{}
 )
 
-type certificatessResource struct {
+type certificatesResource struct {
 	client *graphql.Client
 }
 
-func newCertificatessResource() resource.Resource {
-	return &certificatessResource{}
+func newCertificatesResource() resource.Resource {
+	return &certificatesResource{}
 }
 
-type certificatessResourceModel struct {
+type certificatesResourceModel struct {
 	AppName  types.String `tfsdk:"app"`
 	HostName types.String `tfsdk:"host"`
 }
 
-func (r *certificatessResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *certificatesResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_certificates"
 }
 
-func (r *certificatessResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *certificatesResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Fly Certificates",
 
@@ -43,15 +44,15 @@ func (r *certificatessResource) Schema(_ context.Context, req resource.SchemaReq
 				MarkdownDescription: "App name",
 				Required:            true,
 			},
-			"host": schema.MapAttribute{
-				ElementType: types.StringType,
-				Required:    true,
+			"host": schema.StringAttribute{
+				MarkdownDescription: "Host name",
+				Required:            true,
 			},
 		},
 	}
 }
 
-func (r *certificatessResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *certificatesResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -70,10 +71,17 @@ func (r *certificatessResource) Configure(_ context.Context, req resource.Config
 	r.client = client
 }
 
-func (r *certificatessResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var certificate certificatessResourceModel
+func (r *certificatesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var certificate certificatesResourceModel
 
 	diags := req.Plan.Get(ctx, &certificate)
+
+	data, err := json.Marshal(certificate)
+	if err != nil {
+		resp.Diagnostics.AddError("unmarshall error", err.Error())
+	}
+
+	resp.Diagnostics.AddError("Query failed setting a cert to the app", string(data))
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -110,17 +118,17 @@ func (r *certificatessResource) Create(ctx context.Context, req resource.CreateR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &certificate)...)
 }
 
-func (r *certificatessResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *certificatesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 
 }
 
-func (r *certificatessResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *certificatesResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 
 }
 
-func (r *certificatessResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *certificatesResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 
 }
 
-func (r *certificatessResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *certificatesResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 }
