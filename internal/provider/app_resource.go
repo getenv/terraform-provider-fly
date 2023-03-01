@@ -44,7 +44,7 @@ func (r *appResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Required:            true,
 			},
 			"org": schema.StringAttribute{
-				MarkdownDescription: "App name",
+				MarkdownDescription: "Org name",
 				Optional:            true,
 			},
 		},
