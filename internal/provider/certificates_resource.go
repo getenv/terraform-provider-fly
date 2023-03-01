@@ -47,10 +47,7 @@ func (r *certificatesResource) Schema(_ context.Context, req resource.SchemaRequ
 			},
 			"app_id": schema.StringAttribute{
 				MarkdownDescription: "App ID",
-				// AttributeTypes: map[string]attr.Type{
-				// 	"id": types.StringType,
-				// },
-				Required: true,
+				Required:            true,
 			},
 			"host": schema.StringAttribute{
 				MarkdownDescription: "Host name",
@@ -112,10 +109,6 @@ func (r *certificatesResource) Create(ctx context.Context, req resource.CreateRe
 		Hostname: certificate.HostName.ValueString(),
 	}
 
-	// hostNameCheck := fly.HostnameCheck{}
-
-	// input := fly.AppCertificate{}
-
 	grq := graphql.NewRequest(query)
 	grq.Var("appId", appCert.ID)
 	grq.Var("hostname", appCert.Hostname)
@@ -156,8 +149,6 @@ func (r *certificatesResource) Read(ctx context.Context, req resource.ReadReques
 	if err := r.client.Run(context.Background(), grq, &fq); err != nil {
 		resp.Diagnostics.AddError("Query failed fetching Read", err.Error())
 	}
-
-	// FIX: set secrets kv pairs
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, certificates)...)
 
