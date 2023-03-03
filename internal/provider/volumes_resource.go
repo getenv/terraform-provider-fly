@@ -28,7 +28,9 @@ func newVolumesResource() resource.Resource {
 
 type volumesResourceModel struct {
 	AppName types.String `tfsdk:"app"`
-	VolName types.String `tfsdk:"volumename"`
+	Name    types.String `tfsdk:"name"`
+	Region  types.String `tfsdk:"region"`
+	SizeGB  types.Int64  `tfsdk:"sizegb"`
 }
 
 func (r *volumesResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -44,8 +46,16 @@ func (r *volumesResource) Schema(_ context.Context, req resource.SchemaRequest, 
 				MarkdownDescription: "App name",
 				Required:            true,
 			},
-			"volumename": schema.StringAttribute{
+			"name": schema.StringAttribute{
 				MarkdownDescription: "Volume name",
+				Required:            true,
+			},
+			"region": schema.StringAttribute{
+				MarkdownDescription: "Deployment region",
+				Required:            true,
+			},
+			"sizegb": schema.Int64Attribute{
+				MarkdownDescription: "Volume size in GB",
 				Required:            true,
 			},
 		},
@@ -94,16 +104,16 @@ func (r *volumesResource) Create(ctx context.Context, req resource.CreateRequest
 			app {
 				name
 			}
-			volume {
-				name
-			}
 		}
 	}
 	`
+	resp.Diagnostics.AddWarning("App name", volume.AppName.ValueString()+"_data_")
 
 	createVolMutationInput := fly.CreateVolumeInput{
-		AppID: volume.AppName.String(),
-		Name:  volume.VolName.String(),
+		AppID:  volume.AppName.ValueString(),
+		Name:   volume.Name.ValueString(),
+		Region: volume.Region.ValueString(),
+		SizeGb: int(volume.SizeGB.ValueInt64()),
 	}
 
 	grq := graphql.NewRequest(query)
