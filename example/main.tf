@@ -1,7 +1,6 @@
-resource "fly_secrets" "things" {
+resource "fly_volumes" "things" {
   app = "getenv-terraform-provider-fly-test"
-
-  secrets = {
-    "THING" = "1"
-  }
+  name = "TestVolume"
+  region = "lax"
+  sizegb = 10
 }
