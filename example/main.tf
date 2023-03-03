@@ -1,5 +1,6 @@
-resource "fly_certificates" "things" {
+resource "fly_volumes" "things" {
   app = "getenv-terraform-provider-fly-test"
-  app_id = "getenv-terraform-provider-fly-test"
-  host = "test_Host"
+  name = "TestVolume"
+  region = "lax"
+  sizegb = 10
 }
