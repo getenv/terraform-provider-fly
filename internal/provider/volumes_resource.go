@@ -231,7 +231,7 @@ func (r *volumesResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	grq := graphql.NewRequest(q)
 	deleteInput := fly.DeleteVolumeInput{
-		VolumeID: "vol_2en7r1poodwrk6yx",
+		VolumeID: volume.VolID.ValueString(),
 	}
 
 	grq.Var("input", deleteInput)

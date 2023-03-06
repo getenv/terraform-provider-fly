@@ -102,8 +102,8 @@ func (r *appDeployResource) Create(ctx context.Context, req resource.CreateReque
 `
 
 	deployAppMutationInput := fly.DeployImageInput{
-		AppID: appDeploy.AppName.String(),
-		Image: appDeploy.Image.String(),
+		AppID: appDeploy.AppName.ValueString(),
+		Image: appDeploy.Image.ValueString(),
 	}
 
 	grq := graphql.NewRequest(query)
