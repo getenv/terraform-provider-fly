@@ -6,6 +6,7 @@ require (
 	github.com/hashicorp/terraform-plugin-framework v1.0.1
 	github.com/superfly/flyctl/api v0.0.0-20230106214612-9abbcd53108c
 	github.com/superfly/graphql v0.2.3
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 )
 
 require (
